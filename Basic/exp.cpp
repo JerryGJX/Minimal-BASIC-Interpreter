@@ -68,7 +68,7 @@ IdentifierExp::IdentifierExp(string name) {
 }
 
 int IdentifierExp::eval(EvalState &state) {
-    if (!state.isDefined(name)) error(name + " is undefined");
+    if (!state.isDefined(name)) error("VARIABLE NOT DEFINED");
     return state.getValue(name);
 }
 
@@ -116,6 +116,8 @@ int CompoundExp::eval(EvalState &state) {
         if (lhs->getType() != IDENTIFIER) {
             error("DIVIDE BY ZERO");
         }
+        if (lhs->getType() == IDENTIFIER && lhs->toString() == "LET")
+            error("SYNTAX ERROR");
         int val = rhs->eval(state);
         state.setValue(((IdentifierExp *) lhs)->getName(), val);
         return val;

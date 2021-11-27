@@ -29,7 +29,7 @@ int convert_string_to_int(const std::string &x);
 int main() {
     EvalState state;
     Program program;
-    cout << "Stub implementation of BASIC" << endl;
+    //cout << "Stub implementation of BASIC" << endl;
     while (true) {
         try {
             string input = getLine();
@@ -37,7 +37,7 @@ int main() {
                 return 0;
             processLine(input, program, state);
         } catch (ErrorException &ex) {
-            cerr << "Error: " << ex.getMessage() << endl;
+            cout << ex.getMessage() << endl;
         }
     }
     return 0;
@@ -71,16 +71,14 @@ void processLine(string line, Program &program, EvalState &state) {
             }
         }
     } else if (line == "RUN") {
-        int it = program.getFirstLineNumber();
-        if (it != -1) {
-            program.goto_line(it);
-            while (it!=-1) {
-                auto now=program.getParsedStatement(it);
-
-                now->execute(state);
-                it = program.getNextLineNumber(it);
-            }
+        program.initializer();
+        while (program.get_now() != -1) {
+            auto now = program.getParsedStatement(program.get_now());
+            if (now == nullptr)break;  // TODO 出现不明原因的问题，并在表面上解决了问题。
+            now->execute(state, program);
+            program.goto_next_line();
         }
+
     } else if (line == "CLEAR") {
         program.clear();
         state.Clear();
@@ -93,55 +91,59 @@ void processLine(string line, Program &program, EvalState &state) {
             int line_number = convert_string_to_int(first);
             if (line_number > 0) {
                 program.addSourceLine(line_number, line);
-
                 if (second == "LET") {
-                    cout << scanner.nextToken() << endl;
                     Expression *exp = parseExp(scanner);
-                    auto *Let = new LetStatement(exp);
-                    Let->execute(state);
+                    if (scanner.nextToken() != "LET") {
+                        auto *Let = new LetStatement(exp);
+                        //Let->execute(state, program);
+                        program.setParsedStatement(line_number, Let);
+                    } else error("SYNTAX ERROR");
                     //delete Let;
                 } else if (second == "PRINT") {
                     Expression *exp = parseExp(scanner);
                     auto *Print = new PrintStatement(exp);
                     program.setParsedStatement(line_number, Print);
-                    Print->execute(state);
+                    //Print->execute(state, program);
                     //delete Print;
                 } else if (second == "INPUT") {
                     string third = scanner.nextToken();
                     auto *Input = new InputStatement(third);
-                    Input->execute(state);
-                    delete Input;
-                    //delete Input;
-                } else if(second == "GOTO"){
-
-                }else if (second == "REM" || second == "END"||second.empty()) {
-                }else error("SYNTAX ERROR");
+                    //Input->execute(state, program);
+                    program.setParsedStatement(line_number, Input);
+                } else if (second == "GOTO") {
+                    int to_line_num = stringToInteger(scanner.nextToken());
+                    auto *Auto = new GotoStatement(to_line_num);
+                    program.setParsedStatement(line_number, Auto);
+                } else if (second == "IF") {
+                    auto *If = new IfStatement(line);
+                    program.setParsedStatement(line_number, If);
+                } else if (second == "REM") {
+                    auto *Rem = new RemStatement(line_number);
+                    program.setParsedStatement(line_number, Rem);
+                } else if (second == "END") {
+                    auto *End = new EndStatement();
+                    program.setParsedStatement(line_number, End);
+                } else if (second.empty()) {}
+                else error("SYNTAX ERROR");
             } else error("SYNTAX ERROR");
-        }
-        else if (scanner.getTokenType(first) == WORD) {
+        } else if (scanner.getTokenType(first) == WORD) {
             if (first == "LET") {
                 Expression *exp = parseExp(scanner);
-                auto *Let = new LetStatement(exp);
-                Let->execute(state);
-                delete Let;
+                scanner.ignoreWhitespace();
+                exp->eval(state);
             } else if (first == "PRINT") {
                 Expression *exp = parseExp(scanner);
                 auto *Print = new PrintStatement(exp);
-                Print->execute(state);
+                Print->execute(state, program);
                 delete Print;
             } else if (first == "INPUT") {
                 string second = scanner.nextToken();
                 auto *Input = new InputStatement(second);
-                Input->execute(state);
+                Input->execute(state, program);
                 delete Input;
             } else error("SYNTAX ERROR");
         } else error("SYNTAX ERROR");
     }
-
-//    Expression *exp = parseExp(scanner);
-//    int value = exp->eval(state);
-//    cout << value << endl;
-//    delete exp;
 }
 
 int convert_string_to_int(const std::string &x) {

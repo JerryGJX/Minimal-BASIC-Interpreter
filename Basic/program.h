@@ -16,6 +16,8 @@
 
 using namespace std;
 
+class Statement;
+
 /*
  * This class stores the lines in a BASIC program.  Each line
  * in the program is stored in order according to its line number.
@@ -139,9 +141,15 @@ public:
 
     int getNextLineNumber(int lineNumber);
 
-    int goto_line(int lineNumber);
+    void initializer();//初始化present_line_num
 
-    int get_now();
+    void set_present_line_num(int lineNumber);
+
+    void goto_next_line();
+
+    void set_goto_flag(bool opt);
+
+    int get_now();//获得现在的present_line_num
 
 private:
 
@@ -149,7 +157,9 @@ private:
     unordered_map<int, Statement*> stmt_storage;
     unordered_map<int, string> line_getter;
     set<int> line_num_list;
-    auto present_line_iterator;
+    decltype(line_num_list.begin()) present_line_iterator;
+    int present_line_num;
+    bool goto_flag;
 };
 
 #endif

@@ -17,6 +17,8 @@
 #include "../StanfordCPPLib/tokenscanner.h"
 #include "program.h"
 
+class Program;
+
 /*
  * Class: Statement
  * ----------------
@@ -62,13 +64,15 @@ public:
  * controlling the operation of the interpreter.
  */
 
-    virtual void execute(EvalState &state,Program &program) = 0;
+    virtual void execute(EvalState &state, Program &program) = 0;
 
 };
 
 class RemStatement : public Statement {
 public:
-    RemStatement() = default;
+    int line_num;
+
+    RemStatement(int &line_num);
 
     ~RemStatement() override = default;
 
@@ -83,7 +87,7 @@ public:
 
     ~LetStatement() override = default;
 
-    void execute(EvalState &state,Program &program) override;
+    void execute(EvalState &state, Program &program) override;
 };
 
 class PrintStatement : public Statement {
@@ -92,9 +96,9 @@ public:
 
     PrintStatement(Expression *exp);
 
-    ~PrintStatement() override =default;
+    ~PrintStatement() override = default;
 
-    void execute(EvalState &state,Program &program) override;
+    void execute(EvalState &state, Program &program) override;
 };
 
 class InputStatement : public Statement {
@@ -103,30 +107,44 @@ public:
 
     InputStatement(string variable);
 
-    ~InputStatement() override =default;
+    ~InputStatement() override = default;
 
-    void execute(EvalState &state,Program &program) override;
+    void execute(EvalState &state, Program &program) override;
 
     static int convert_string_(const std::string &x);
 };
 
 class EndStatement : public Statement {
 public:
-    EndStatement()=default;
+    EndStatement() = default;
 
-    ~EndStatement() override =default;
+    ~EndStatement() override = default;
 
-    void execute(EvalState &state,Program &program) override;
+    void execute(EvalState &state, Program &program) override;
 };
 
 class GotoStatement : public Statement {
 public:
     int line_num;
-    GotoStatement(string &line_num);
 
-    ~GotoStatement() override =default;
+    GotoStatement(int &line_num);
 
-    void execute(EvalState &state,Program &program) override;
+    ~GotoStatement() override = default;
+
+    void execute(EvalState &state, Program &program) override;
+};
+
+class IfStatement : public Statement {
+public:
+    bool flag;
+    int line_num;
+    string line;
+
+    IfStatement(string &line);
+
+    ~IfStatement() override = default;
+
+    void execute(EvalState &state, Program &program) override;
 };
 
 
